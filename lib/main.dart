@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  const MethodChannel('flavor')
+      .invokeMethod<String>('getFlavor').then((value) {
+        print(value);
+        runApp(const MyApp());
+      },);
+
 }
 
 class MyApp extends StatelessWidget {

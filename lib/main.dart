@@ -14,6 +14,7 @@ void main() {
         .then((_) {
       return runApp(
         MaterialApp(
+          debugShowCheckedModeBanner: false,
           home: MyApp(
             buildFlavor: value,
           ),

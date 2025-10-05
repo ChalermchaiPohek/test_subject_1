@@ -46,7 +46,9 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
     final bloc = Provider.of<WalletMainScreenBloc>(context, listen: false);
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: Text("Test application"),
+      ),
       body: SafeArea(
         child: Column(
           children: [

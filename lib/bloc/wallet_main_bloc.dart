@@ -24,9 +24,9 @@ class WalletMainScreenBloc {
     _toggleFullAddress.close();
   }
 
-  Future<Balance> getBalance() async {
+  Future<Balance> getBalance({String? address}) async {
     walletAddress = await AppData.singleton.loadWalletAddress();
-    final resp = await _accountService.getWalletBalance();
+    final resp = await _accountService.getWalletBalance(address: address);
     return resp;
   }
 

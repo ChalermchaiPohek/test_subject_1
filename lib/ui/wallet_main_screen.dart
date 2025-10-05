@@ -5,6 +5,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:test_subject_1/bloc/wallet_main_bloc.dart';
 import 'package:test_subject_1/common/currency_unit.dart';
 import 'package:test_subject_1/model/balance_model.dart';
+import 'package:test_subject_1/model/transaction_model.dart';
 import 'package:test_subject_1/services/account_ws.dart';
 import 'package:test_subject_1/storage/account_db.dart';
 import 'package:test_subject_1/utils/app_data.dart';
@@ -56,24 +57,35 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
                   return Skeletonizer(
                     enabled: snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData,
                     child: Container(
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                          color: Colors.amberAccent
+                          color: Colors.amberAccent,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Expanded(child: Text("Wallet address: ")),
-                              Expanded(child: Text(shortenAddress(bloc.walletAddress ?? ""), overflow: TextOverflow.fade, maxLines: 1, softWrap: false,)),
-                            ],
+                          _buildRowChildren(
+                            context,
+                            Text("Wallet address: "),
+                            Text(shortenAddress(bloc.walletAddress ?? ""), overflow: TextOverflow.fade, maxLines: 1, softWrap: false,),
                           ),
-                          Row(
-                            children: [
-                              Text("Balance:"),
-                              Text("\$${CurrencyUnit.toUSD(wei ?? BigInt.zero).toStringAsFixed(4)}") /// TODO: add numberformat
-                            ],
-                          )
+                          // Row(
+                          //   children: [
+                          //     Expanded(child: Text("Wallet address: ")),
+                          //     Expanded(child: Text(shortenAddress(bloc.walletAddress ?? ""), overflow: TextOverflow.fade, maxLines: 1, softWrap: false,)),
+                          //   ],
+                          // ),
+                          _buildRowChildren(
+                            context,
+                            Text("Balance:"),
+                            Text("\$${CurrencyUnit.toUSD(wei ?? BigInt.zero).toStringAsFixed(4)}") /// TODO: add numberformat),
+                          ),
+                          // Row(
+                          //   children: [
+                          //     Text("Balance:"),
+                          //     Text("\$${CurrencyUnit.toUSD(wei ?? BigInt.zero).toStringAsFixed(4)}") /// TODO: add numberformat
+                          //   ],
+                          // )
                         ],
                       ),
                     ),
@@ -99,16 +111,15 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
                       itemBuilder: (context, index) {
                         final transaction = transactionList.elementAt(index);
                         final BigInt? wei = BigInt.tryParse(transaction.value ?? "");
-                        
                         return ListTile(
                           onTap: () {
-
+                            return _showDetailDialog(context, transaction);
                           },
                           title: Text("${shortenAddress(transaction.from ?? "")} -> ${shortenAddress(transaction.to ?? "")}"),
-                          subtitle: Text("\$${CurrencyUnit.toUSD(wei ?? BigInt.zero).toStringAsFixed(4)}"),
+                          subtitle: Text("Transfer value: \$${CurrencyUnit.toUSD(wei ?? BigInt.zero).toStringAsFixed(4)}"),
                           trailing: GestureDetector(
                             onTap: () {
-                              /// TODO: show more detail.
+                              return _showDetailDialog(context, transaction);
                             },
                             child: Icon(CupertinoIcons.info_circle),
                           ),
@@ -125,9 +136,77 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
     );
   }
 
+  void _showDetailDialog(BuildContext context, Result transaction) {
+    final bloc = Provider.of<WalletMainScreenBloc>(context, listen: false);
+    final DateTime timestamp = fromUnix(int.tryParse(transaction.timeStamp ?? "") ?? 0);
+    final String? contactAddress = bloc.walletAddress == transaction.to ? transaction.from : transaction.to;
+    showDialog(context: context, builder: (dialogCtx) {
+      return Dialog(
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildRowChildren(
+                context,
+                Text("Block # "),
+                Text(transaction.blockNumber ?? ""),
+              ),
+              _buildRowChildren(
+                context,
+                Text("Timestamp: "),
+                Text(timestamp.toIso8601String()),
+              ),
+              _buildRowChildren(
+                context,
+                Text("Contact Address: "),
+                Text(shortenAddress(contactAddress ?? "")),
+              ),
+              FutureBuilder<Balance>(
+                future: bloc.getBalance(address: contactAddress),
+                builder: (_, ss) {
+                  final Balance? data = ss.data;
+                  final BigInt? wei = BigInt.tryParse(data?.result ?? "");
+
+                  return _buildRowChildren(
+                    context,
+                    Text("Contact Address Balance: "),
+                    Text("\$${CurrencyUnit.toUSD(wei ?? BigInt.zero).toStringAsFixed(4)}"),
+                  );
+                },
+              )
+            ],
+          ),
+        ),
+      );
+    },);
+  }
+
+  Widget _buildRowChildren(BuildContext context, Widget left, Widget right) {
+    return Row(
+      children: [
+        Expanded(child: left),
+        Expanded(child: right),
+      ],
+    );
+  }
 
   String shortenAddress(String text, {int prefix = 6, int suffix = 4}) {
     if (text.length <= prefix + suffix) return text;
     return '${text.substring(0, prefix)}...${text.substring(text.length - suffix)}';
+  }
+
+  DateTime fromUnix(int timestamp) {
+    // Detect if timestamp is in seconds or milliseconds
+    if (timestamp.toString().length == 10) {
+      // Unix timestamp in seconds
+      return DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    } else if (timestamp.toString().length == 13) {
+      // Unix timestamp in milliseconds
+      return DateTime.fromMillisecondsSinceEpoch(timestamp);
+    } else {
+      throw ArgumentError('Invalid timestamp length: $timestamp');
+    }
   }
 }

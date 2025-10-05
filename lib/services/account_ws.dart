@@ -42,15 +42,8 @@ class AccountService {
       "offset": offset ?? 20,
       "sort": "asc",
       "apikey": apiKey
-      /*
-       &startblock=0
-   &endblock=99999999
-   &page=1
-   &offset=10
-   &sort=asc
-   &apikey=YourApiKeyToken
-       */
     };
+
     return http.get("", queryParameters: queryParams).then((value) {
       if (value.statusCode != 200) {
         /// TODO: handle error

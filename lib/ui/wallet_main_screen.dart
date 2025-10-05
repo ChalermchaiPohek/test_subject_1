@@ -1,8 +1,13 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:test_subject_1/bloc/wallet_main_bloc.dart';
+import 'package:test_subject_1/common/currency_unit.dart';
+import 'package:test_subject_1/model/balance_model.dart';
 import 'package:test_subject_1/services/account_ws.dart';
 import 'package:test_subject_1/storage/account_db.dart';
+import 'package:test_subject_1/utils/app_data.dart';
 
 class WalletMainScreen extends StatefulWidget {
   const WalletMainScreen({super.key});
@@ -38,11 +43,79 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              FutureBuilder(
+              FutureBuilder<Balance>(
                 future: bloc.getBalance(),
                 builder: (context, snapshot) {
-                  print(snapshot);
-                  return Text("data");
+                  if (snapshot.hasError) {
+                    /// TODO: handling error.
+                  }
+
+                  final Balance? data = snapshot.data;
+                  final BigInt? wei = BigInt.tryParse(data?.result ?? "");
+                  // final double? eth = CurrencyUnit.ether.fromWei(wei ?? BigInt.zero);
+                  return Skeletonizer(
+                    enabled: snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData,
+                    child: Container(
+                      decoration: BoxDecoration(
+                          color: Colors.amberAccent
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(child: Text("Wallet address: ")),
+                              Expanded(child: Text(shortenAddress(bloc.walletAddress ?? ""), overflow: TextOverflow.fade, maxLines: 1, softWrap: false,)),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Text("Balance:"),
+                              Text("\$${CurrencyUnit.toUSD(wei ?? BigInt.zero).toStringAsFixed(4)}") /// TODO: add numberformat
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              FutureBuilder(
+                future: bloc.getTransactions(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    /// TODO: handling error.
+                  }
+
+                  final isLoading = snapshot.connectionState == ConnectionState.waiting;
+                  final transactionList = snapshot.data?.result ?? [];
+
+                  return Skeletonizer(
+                    enabled: isLoading,
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: transactionList.length,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        final transaction = transactionList.elementAt(index);
+                        final BigInt? wei = BigInt.tryParse(transaction.value ?? "");
+                        
+                        return ListTile(
+                          onTap: () {
+
+                          },
+                          title: Text("${shortenAddress(transaction.from ?? "")} -> ${shortenAddress(transaction.to ?? "")}"),
+                          subtitle: Text("\$${CurrencyUnit.toUSD(wei ?? BigInt.zero).toStringAsFixed(4)}"),
+                          trailing: GestureDetector(
+                            onTap: () {
+                              /// TODO: show more detail.
+                            },
+                            child: Icon(CupertinoIcons.info_circle),
+                          ),
+                        );
+                      },
+                    ),
+                  );
                 },
               )
             ],
@@ -50,5 +123,11 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
         ),
       ),
     );
+  }
+
+
+  String shortenAddress(String text, {int prefix = 6, int suffix = 4}) {
+    if (text.length <= prefix + suffix) return text;
+    return '${text.substring(0, prefix)}...${text.substring(text.length - suffix)}';
   }
 }

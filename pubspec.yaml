@@ -49,6 +49,8 @@ dev_dependencies:
   pretty_dio_logger: ^1.4.0
   shared_preferences: ^2.5.3
   provider: ^6.1.5+1
+  skeletonizer: ^2.1.0+1
+  rxdart: ^0.28.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

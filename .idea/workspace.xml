@@ -5,7 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="845d7d01-9689-435a-b8c6-947286987474" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/common/currency_unit.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/model/balance_model.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/model/transaction_model.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_Packages.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_Packages.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/bloc/wallet_main_bloc.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/bloc/wallet_main_bloc.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/services/account_ws.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/services/account_ws.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/ui/wallet_main_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/ui/wallet_main_screen.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -97,13 +105,6 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="Dart">
-          <url>file://$PROJECT_DIR$/lib/ui/wallet_main_screen.dart</url>
-          <line>43</line>
-          <option name="timeStamp" value="7" />
-        </line-breakpoint>
-      </breakpoints>
       <default-breakpoints>
         <breakpoint type="dart-exception" />
       </default-breakpoints>

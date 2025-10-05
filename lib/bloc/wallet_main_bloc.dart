@@ -35,13 +35,13 @@ class WalletMainScreenBloc {
     return resp;
   }
 
-  Future<Transaction?> getTransactions() async {
-    final Transaction? transactions = await _accountService.getTransaction(offset: 50);
-    if (transactions == null || transactions.result == null) {
-      return null;
+  Future<List<Transaction>> getTransactions() async {
+    final List<Transaction> transactions = await _accountService.getTransaction(offset: 50);
+    if (transactions.isEmpty) {
+      return [];
     }
 
-    transactions.result!.sort((a, b) {
+    transactions.sort((a, b) {
       if (a.timeStamp == null && b.timeStamp != null) {
         return 1;
       }
@@ -54,6 +54,8 @@ class WalletMainScreenBloc {
 
       return a.timeStamp!.compareTo(b.timeStamp!);
     },);
+
+
 
     return transactions;
   }

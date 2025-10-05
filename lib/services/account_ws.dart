@@ -22,14 +22,14 @@ class AccountService {
     };
     return http.get("", queryParameters: queryParams).then((value) {
       if (value.statusCode != 200) {
-        /// TODO: handle error
+        throw Error.throwWithStackTrace(value.statusMessage.toString(), StackTrace.current);
       }
       final resp = value.data;
       return Balance.fromJson(resp);
     },);
   }
 
-  Future getTransaction({int? page, int? offset}) async {
+  Future<List<Transaction>> getTransaction({int? page, int? offset}) async {
     final String? walletAddress = await AppData.singleton.loadWalletAddress();
     final String? apiKey = await AppData.singleton.loadAPIKey();
     final Map<String, dynamic> queryParams = {
@@ -46,10 +46,14 @@ class AccountService {
 
     return http.get("", queryParameters: queryParams).then((value) {
       if (value.statusCode != 200) {
-        /// TODO: handle error
+        throw Error.throwWithStackTrace(value.statusMessage.toString(), StackTrace.current);
       }
       final resp = value.data;
-      return Transaction.fromJson(resp);
+      final rawValue = resp["result"];
+      if (rawValue is String) {
+        throw Error.throwWithStackTrace(rawValue, StackTrace.current);
+      }
+      return List<Transaction>.from(resp["result"].map((x) => Transaction.fromJson(x)));
     },);
   }
 

@@ -1,38 +1,33 @@
-// To parse this JSON data, do
-//
-//     final transaction = transactionFromJson(jsonString);
-
 import 'dart:convert';
 
 Transaction transactionFromJson(String str) => Transaction.fromJson(json.decode(str));
 
 String transactionToJson(Transaction data) => json.encode(data.toJson());
 
+// class Transaction {
+//   final String? status;
+//   final String? message;
+//   final List<Result>? result;
+//
+//   Transaction({
+//     this.status,
+//     this.message,
+//     this.result,
+//   });
+//
+//   factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
+//     status: json["status"],
+//     message: json["message"],
+//     result: json["result"] == null ? [] : List<Result>.from(json["result"]!.map((x) => Result.fromJson(x))),
+//   );
+//
+//   Map<String, dynamic> toJson() => {
+//     "status": status,
+//     "message": message,
+//     "result": result == null ? [] : List<dynamic>.from(result!.map((x) => x.toJson())),
+//   };
+// }
 class Transaction {
-  final String? status;
-  final String? message;
-  final List<Result>? result;
-
-  Transaction({
-    this.status,
-    this.message,
-    this.result,
-  });
-
-  factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
-    status: json["status"],
-    message: json["message"],
-    result: json["result"] == null ? [] : List<Result>.from(json["result"]!.map((x) => Result.fromJson(x))),
-  );
-
-  Map<String, dynamic> toJson() => {
-    "status": status,
-    "message": message,
-    "result": result == null ? [] : List<dynamic>.from(result!.map((x) => x.toJson())),
-  };
-}
-
-class Result {
   final String? blockNumber;
   final String? timeStamp;
   final String? hash;
@@ -54,7 +49,7 @@ class Result {
   final String? methodId;
   final String? functionName;
 
-  Result({
+  Transaction({
     this.blockNumber,
     this.timeStamp,
     this.hash,
@@ -77,7 +72,7 @@ class Result {
     this.functionName,
   });
 
-  factory Result.fromJson(Map<String, dynamic> json) => Result(
+  factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
     blockNumber: json["blockNumber"],
     timeStamp: json["timeStamp"],
     hash: json["hash"],

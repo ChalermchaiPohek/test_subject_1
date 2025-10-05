@@ -105,7 +105,7 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
                 );
               },
             ),
-            FutureBuilder(
+            FutureBuilder<List<Transaction>>(
               future: bloc.getTransactions(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -123,10 +123,12 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
                   );
                 }
 
-                final transactionList = snapshot.data?.result ?? [];
-                if (transactionList.isEmpty && snapshot.connectionState == ConnectionState.active) {
-                  return _buildErrorWidget(context, errorText: "Data not found.");
-                }
+                final transactionList = snapshot.data ?? [];
+                print("::::::::::::");
+                print(snapshot);
+                // if (transactionList.isEmpty && snapshot.connectionState == ConnectionState.active) {
+                //   return _buildErrorWidget(context, errorText: "Data not found.");
+                // }
 
                 return Expanded(
                   child: RefreshIndicator(
@@ -169,10 +171,15 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
     );
   }
 
-  void _showDetailDialog(BuildContext context, Result transaction) {
+  void _showDetailDialog(BuildContext context, Transaction transaction) {
     final bloc = Provider.of<WalletMainScreenBloc>(context, listen: false);
     final DateTime timestamp = fromUnix(int.tryParse(transaction.timeStamp ?? "") ?? 0);
-    final String? contactAddress = bloc.walletAddress == transaction.to ? transaction.from : transaction.to;
+    String contactAddress =
+    bloc.walletAddress == transaction.to
+        ? transaction.from ?? ""
+        : bloc.walletAddress == transaction.from
+        ? transaction.to ?? ""
+        : "";
     showDialog(context: context, builder: (dialogCtx) {
       return Dialog(
         backgroundColor: Colors.white,

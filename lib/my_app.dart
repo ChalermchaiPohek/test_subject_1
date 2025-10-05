@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
+import 'package:lottie/lottie.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/single_child_widget.dart';
@@ -46,8 +46,7 @@ class _MyAppState extends State<MyApp> {
                 return Container(
                   color: Colors.white,
                   child: Center(
-                    /// TODO: add fancy loading animation
-                    child: CupertinoActivityIndicator(),
+                    child: LottieBuilder.asset("assets/lotties/loading.json"),
                   ),
                 );
               }

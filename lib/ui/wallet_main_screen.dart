@@ -9,6 +9,8 @@ import 'package:test_subject_1/model/transaction_model.dart';
 import 'package:test_subject_1/services/account_ws.dart';
 import 'package:test_subject_1/storage/account_db.dart';
 import 'package:test_subject_1/utils/app_data.dart';
+import 'package:lottie/lottie.dart';
+import 'package:intl/intl.dart';
 
 class WalletMainScreen extends StatefulWidget {
   const WalletMainScreen({super.key});
@@ -18,6 +20,11 @@ class WalletMainScreen extends StatefulWidget {
 }
 
 class _WalletMainScreenState extends State<WalletMainScreen> {
+  final NumberFormat currencyFormatter = NumberFormat.currency(
+    locale: 'en_US',
+    symbol: '\$',
+    decimalDigits: 4,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -41,96 +48,122 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
     return Scaffold(
       appBar: AppBar(),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              FutureBuilder<Balance>(
-                future: bloc.getBalance(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    /// TODO: handling error.
-                  }
+        child: Column(
+          children: [
+            FutureBuilder<Balance>(
+              future: bloc.getBalance(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.amberAccent,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildRowChildren(
+                          context,
+                          Text("Wallet address: "),
+                          Text("N/A"),
+                        ),
+                        _buildRowChildren(
+                          context,
+                          Text("Balance:"),
+                          Text("N/A"),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
-                  final Balance? data = snapshot.data;
-                  final BigInt? wei = BigInt.tryParse(data?.result ?? "");
-                  // final double? eth = CurrencyUnit.ether.fromWei(wei ?? BigInt.zero);
-                  return Skeletonizer(
-                    enabled: snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData,
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                          color: Colors.amberAccent,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildRowChildren(
-                            context,
-                            Text("Wallet address: "),
-                            Text(shortenAddress(bloc.walletAddress ?? ""), overflow: TextOverflow.fade, maxLines: 1, softWrap: false,),
-                          ),
-                          // Row(
-                          //   children: [
-                          //     Expanded(child: Text("Wallet address: ")),
-                          //     Expanded(child: Text(shortenAddress(bloc.walletAddress ?? ""), overflow: TextOverflow.fade, maxLines: 1, softWrap: false,)),
-                          //   ],
-                          // ),
-                          _buildRowChildren(
+                final Balance? data = snapshot.data;
+                final BigInt? wei = BigInt.tryParse(data?.result ?? "");
+                return Skeletonizer(
+                  enabled: snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.amberAccent,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildRowChildren(
+                          context,
+                          Text("Wallet address: "),
+                          Text(shortenAddress(bloc.walletAddress ?? ""), overflow: TextOverflow.fade, maxLines: 1, softWrap: false,),
+                        ),
+                        _buildRowChildren(
                             context,
                             Text("Balance:"),
-                            Text("\$${CurrencyUnit.toUSD(wei ?? BigInt.zero).toStringAsFixed(4)}") /// TODO: add numberformat),
-                          ),
-                          // Row(
-                          //   children: [
-                          //     Text("Balance:"),
-                          //     Text("\$${CurrencyUnit.toUSD(wei ?? BigInt.zero).toStringAsFixed(4)}") /// TODO: add numberformat
-                          //   ],
-                          // )
-                        ],
-                      ),
+                            Text(formatCurrency(CurrencyUnit.toUSD(wei ?? BigInt.zero)))
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            FutureBuilder(
+              future: bloc.getTransactions(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  _buildErrorWidget(context, errorText: snapshot.error.toString());
+                }
+
+                final isLoading = snapshot.connectionState == ConnectionState.waiting || snapshot.connectionState != ConnectionState.done;
+                if (isLoading) {
+                  return Center(
+                    child: LottieBuilder.asset(
+                      "assets/lotties/loading.json",
+                      width: 200,
+                      height: 200,
                     ),
                   );
-                },
-              ),
-              FutureBuilder(
-                future: bloc.getTransactions(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    /// TODO: handling error.
-                  }
+                }
 
-                  final isLoading = snapshot.connectionState == ConnectionState.waiting;
-                  final transactionList = snapshot.data?.result ?? [];
+                final transactionList = snapshot.data?.result ?? [];
+                if (transactionList.isEmpty && snapshot.connectionState == ConnectionState.active) {
+                  return _buildErrorWidget(context, errorText: "Data not found.");
+                }
 
-                  return Skeletonizer(
-                    enabled: isLoading,
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: transactionList.length,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        final transaction = transactionList.elementAt(index);
-                        final BigInt? wei = BigInt.tryParse(transaction.value ?? "");
-                        return ListTile(
-                          onTap: () {
-                            return _showDetailDialog(context, transaction);
+                return Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      bloc.refreshData(null);
+                    },
+                    child: StreamBuilder(
+                      stream: bloc.toggleReload,
+                      builder: (context, event) {
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: transactionList.length,
+                          itemBuilder: (context, index) {
+                            final transaction = transactionList.elementAt(index);
+                            final BigInt? wei = BigInt.tryParse(transaction.value ?? "");
+                            return ListTile(
+                              onTap: () {
+                                return _showDetailDialog(context, transaction);
+                              },
+                              title: Text("${shortenAddress(transaction.from ?? "")} -> ${shortenAddress(transaction.to ?? "")}"),
+                              subtitle: Text("Transfer value: ${formatCurrency(CurrencyUnit.toUSD(wei ?? BigInt.zero))}"),
+                              trailing: GestureDetector(
+                                onTap: () {
+                                  return _showDetailDialog(context, transaction);
+                                },
+                                child: Icon(CupertinoIcons.info_circle),
+                              ),
+                            );
                           },
-                          title: Text("${shortenAddress(transaction.from ?? "")} -> ${shortenAddress(transaction.to ?? "")}"),
-                          subtitle: Text("Transfer value: \$${CurrencyUnit.toUSD(wei ?? BigInt.zero).toStringAsFixed(4)}"),
-                          trailing: GestureDetector(
-                            onTap: () {
-                              return _showDetailDialog(context, transaction);
-                            },
-                            child: Icon(CupertinoIcons.info_circle),
-                          ),
                         );
                       },
-                    ),
-                  );
-                },
-              )
-            ],
-          ),
+                    )
+                  ),
+                );
+              },
+            )
+          ],
         ),
       ),
     );
@@ -172,7 +205,7 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
                   return _buildRowChildren(
                     context,
                     Text("Contact Address Balance: "),
-                    Text("\$${CurrencyUnit.toUSD(wei ?? BigInt.zero).toStringAsFixed(4)}"),
+                    Text(formatCurrency(CurrencyUnit.toUSD(wei ?? BigInt.zero))),
                   );
                 },
               )
@@ -192,9 +225,28 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
     );
   }
 
+  Widget _buildErrorWidget(BuildContext context, {String? errorText}) {
+    return Column(
+      children: [
+        Center(
+          child: LottieBuilder.asset(
+            "assets/lotties/not_found.json",
+            width: 200,
+            height: 200,
+          ),
+        ),
+        errorText == null ? const SizedBox() : Text(errorText)
+      ],
+    );
+  }
+
   String shortenAddress(String text, {int prefix = 6, int suffix = 4}) {
     if (text.length <= prefix + suffix) return text;
     return '${text.substring(0, prefix)}...${text.substring(text.length - suffix)}';
+  }
+
+  String formatCurrency(double amount) {
+    return currencyFormatter.format(amount);
   }
 
   DateTime fromUnix(int timestamp) {

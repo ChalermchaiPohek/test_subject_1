@@ -14,8 +14,13 @@ class WalletMainScreenBloc {
   late BehaviorSubject<bool> _toggleFullAddress;
   Stream<bool> get toggleFullAddressStrm => _toggleFullAddress.stream;
 
+  late BehaviorSubject _toggleReload;
+  Stream get toggleReload => _toggleReload.stream;
+  Function(dynamic) get refreshData => _toggleReload.add;
+
   WalletMainScreenBloc(this._accountDB, this._accountService) {
     _toggleFullAddress = BehaviorSubject<bool>.seeded(false);
+    _toggleReload = BehaviorSubject();
   }
 
   String? walletAddress;

@@ -4,29 +4,6 @@ Transaction transactionFromJson(String str) => Transaction.fromJson(json.decode(
 
 String transactionToJson(Transaction data) => json.encode(data.toJson());
 
-// class Transaction {
-//   final String? status;
-//   final String? message;
-//   final List<Result>? result;
-//
-//   Transaction({
-//     this.status,
-//     this.message,
-//     this.result,
-//   });
-//
-//   factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
-//     status: json["status"],
-//     message: json["message"],
-//     result: json["result"] == null ? [] : List<Result>.from(json["result"]!.map((x) => Result.fromJson(x))),
-//   );
-//
-//   Map<String, dynamic> toJson() => {
-//     "status": status,
-//     "message": message,
-//     "result": result == null ? [] : List<dynamic>.from(result!.map((x) => x.toJson())),
-//   };
-// }
 class Transaction {
   final String? blockNumber;
   final String? timeStamp;

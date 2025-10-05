@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:rxdart/rxdart.dart';
 import 'package:test_subject_1/model/balance_model.dart';
@@ -30,33 +31,41 @@ class WalletMainScreenBloc {
   }
 
   Future<Balance> getBalance({String? address}) async {
-    walletAddress = await AppData.singleton.loadWalletAddress();
-    final resp = await _accountService.getWalletBalance(address: address);
-    return resp;
+    try {
+      walletAddress = await AppData.singleton.loadWalletAddress();
+      final resp = await _accountService.getWalletBalance(address: address);
+      return resp;
+    } catch (e, s) {
+      log(s.toString());
+      rethrow;
+    }
   }
 
   Future<List<Transaction>> getTransactions() async {
-    final List<Transaction> transactions = await _accountService.getTransaction(offset: 50);
-    if (transactions.isEmpty) {
-      return [];
+    try {
+      final List<Transaction> transactions = await _accountService.getTransaction(offset: 50);
+      if (transactions.isEmpty) {
+        return [];
+      }
+
+      transactions.sort((a, b) {
+        if (a.timeStamp == null && b.timeStamp != null) {
+          return 1;
+        }
+        if (a.timeStamp != null && b.timeStamp == null) {
+          return -1;
+        }
+        if (a.timeStamp == null && b.timeStamp == null) {
+          return 0;
+        }
+
+        return a.timeStamp!.compareTo(b.timeStamp!);
+      },);
+
+      return transactions;
+    } catch (e, s) {
+      log(s.toString());
+      rethrow;
     }
-
-    transactions.sort((a, b) {
-      if (a.timeStamp == null && b.timeStamp != null) {
-        return 1;
-      }
-      if (a.timeStamp != null && b.timeStamp == null) {
-        return -1;
-      }
-      if (a.timeStamp == null && b.timeStamp == null) {
-        return 0;
-      }
-
-      return a.timeStamp!.compareTo(b.timeStamp!);
-    },);
-
-
-
-    return transactions;
   }
 }

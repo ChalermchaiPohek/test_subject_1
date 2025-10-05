@@ -105,66 +105,61 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
                 );
               },
             ),
-            FutureBuilder<List<Transaction>>(
-              future: bloc.getTransactions(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  _buildErrorWidget(context, errorText: snapshot.error.toString());
-                }
+            StreamBuilder(
+              stream: bloc.toggleReload,
+              builder: (context, event) {
+                return FutureBuilder<List<Transaction>>(
+                  future: bloc.getTransactions(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      _buildErrorWidget(context, errorText: snapshot.error.toString());
+                    }
 
-                final isLoading = snapshot.connectionState == ConnectionState.waiting || snapshot.connectionState != ConnectionState.done;
-                if (isLoading) {
-                  return Center(
-                    child: LottieBuilder.asset(
-                      "assets/lotties/loading.json",
-                      width: 200,
-                      height: 200,
-                    ),
-                  );
-                }
+                    final isLoading = snapshot.connectionState == ConnectionState.waiting || snapshot.connectionState != ConnectionState.done;
+                    if (isLoading) {
+                      return Center(
+                        child: LottieBuilder.asset(
+                          "assets/lotties/loading.json",
+                          width: 200,
+                          height: 200,
+                        ),
+                      );
+                    }
 
-                final transactionList = snapshot.data ?? [];
-                print("::::::::::::");
-                print(snapshot);
-                // if (transactionList.isEmpty && snapshot.connectionState == ConnectionState.active) {
-                //   return _buildErrorWidget(context, errorText: "Data not found.");
-                // }
+                    final transactionList = snapshot.data ?? [];
 
-                return Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      bloc.refreshData(null);
-                    },
-                    child: StreamBuilder(
-                      stream: bloc.toggleReload,
-                      builder: (context, event) {
-                        return ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: transactionList.length,
-                          itemBuilder: (context, index) {
-                            final transaction = transactionList.elementAt(index);
-                            final BigInt? wei = BigInt.tryParse(transaction.value ?? "");
-                            return ListTile(
-                              onTap: () {
-                                return _showDetailDialog(context, transaction);
-                              },
-                              title: Text("${shortenAddress(transaction.from ?? "")} -> ${shortenAddress(transaction.to ?? "")}"),
-                              subtitle: Text("Transfer value: ${formatCurrency(CurrencyUnit.toUSD(wei ?? BigInt.zero))}"),
-                              trailing: GestureDetector(
+                    return Expanded(
+                      child: RefreshIndicator(
+                          onRefresh: () async {
+                            bloc.refreshData(null);
+                          },
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: transactionList.length,
+                            itemBuilder: (context, index) {
+                              final transaction = transactionList.elementAt(index);
+                              final BigInt? wei = BigInt.tryParse(transaction.value ?? "");
+                              return ListTile(
                                 onTap: () {
                                   return _showDetailDialog(context, transaction);
                                 },
-                                child: Icon(CupertinoIcons.info_circle),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    )
-                  ),
+                                title: Text("${shortenAddress(transaction.from ?? "")} -> ${shortenAddress(transaction.to ?? "")}"),
+                                subtitle: Text("Transfer value: ${formatCurrency(CurrencyUnit.toUSD(wei ?? BigInt.zero))}"),
+                                trailing: GestureDetector(
+                                  onTap: () {
+                                    return _showDetailDialog(context, transaction);
+                                  },
+                                  child: Icon(CupertinoIcons.info_circle),
+                                ),
+                              );
+                            },
+                          )
+                      ),
+                    );
+                  },
                 );
               },
-            )
+            ),
           ],
         ),
       ),
@@ -174,12 +169,13 @@ class _WalletMainScreenState extends State<WalletMainScreen> {
   void _showDetailDialog(BuildContext context, Transaction transaction) {
     final bloc = Provider.of<WalletMainScreenBloc>(context, listen: false);
     final DateTime timestamp = fromUnix(int.tryParse(transaction.timeStamp ?? "") ?? 0);
-    String contactAddress =
-    bloc.walletAddress == transaction.to
-        ? transaction.from ?? ""
-        : bloc.walletAddress == transaction.from
-        ? transaction.to ?? ""
-        : "";
+    String contactAddress = "";
+    if (bloc.walletAddress?.toLowerCase() == transaction.to?.toLowerCase()) {
+      contactAddress = transaction.from ?? "";
+    }
+    if (bloc.walletAddress?.toLowerCase() == transaction.from?.toLowerCase()) {
+      contactAddress = transaction.to ?? "";
+    }
     showDialog(context: context, builder: (dialogCtx) {
       return Dialog(
         backgroundColor: Colors.white,
